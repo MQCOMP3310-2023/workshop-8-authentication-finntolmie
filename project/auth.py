@@ -6,9 +6,11 @@ from . import db, app
 
 auth = Blueprint('auth', __name__)
 
+
 @auth.route('/login')
 def login():
     return render_template('login.html')
+
 
 @auth.route('/login', methods=['POST'])
 def login_post():
@@ -23,25 +25,28 @@ def login_post():
     if not user or not (user.password == password):
         flash('Please check your login details and try again.')
         app.logger.warning("User login failed")
-        return redirect(url_for('auth.login')) # if the user doesn't exist or password is wrong, reload the page
+        # if the user doesn't exist or password is wrong, reload the page
+        return redirect(url_for('auth.login'))
 
     # if the above check passes, then we know the user has the right credentials
     login_user(user, remember=remember)
     return redirect(url_for('main.profile'))
 
+
 @auth.route('/signup')
 def signup():
     return render_template('signup.html')
+
 
 @auth.route('/signup', methods=['POST'])
 def signup_post():
     email = request.form.get('email')
     name = request.form.get('name')
     password = request.form.get('password')
-
-    user = db.session.execute(text('select * from user where email = "' + email +'"')).all()
-    if len(user) > 0: # if a user is found, we want to redirect back to signup page so user can try again
-        flash('Email address already exists')  # 'flash' function stores a message accessible in the template code.
+    user = User.query.filter_by(email=email).first()
+    if len(user) > 0:  # if a user is found, we want to redirect back to signup page so user can try again
+        # 'flash' function stores a message accessible in the template code.
+        flash('Email address already exists')
         app.logger.debug("User email already exists")
         return redirect(url_for('auth.signup'))
 
@@ -54,10 +59,11 @@ def signup_post():
 
     return redirect(url_for('auth.login'))
 
+
 @auth.route('/logout')
 @login_required
 def logout():
-    logout_user();
+    logout_user()
     return redirect(url_for('main.index'))
 
 # See https://www.digitalocean.com/community/tutorials/how-to-add-authentication-to-your-app-with-flask-login for more information
